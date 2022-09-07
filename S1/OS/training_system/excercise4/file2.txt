@@ -1,0 +1,14 @@
+Bureau
+Documents
+Images
+Modèles
+Musique
+oracle.txt
+Public
+public_html
+R
+S1
+snap
+Téléchargements
+training_system
+Vidéos

@@ -1,0 +1,45 @@
+   59  pwd
+   60  mkdir training_system/excercise4
+   61  mkdir -r training_system/excercise4
+   62  mkdir --r training_system/excercise4
+   63  mkdir -R training_system/excercise4
+   64  man mkdir
+   65  mkdir -p training_system/excercise4
+   66  ls training_system/
+   67  cd training_system/excercise4/
+   68  cat file1.txt
+   69  touch file1.txt
+   70  ls
+   71  man wc
+   72  wc -l file1.txt
+   73  cd ..
+   74  ls > training_system/excercise4/file2.txt
+   75  man cat
+   76  man tail
+   77  tail -n training_system/excercise4/file2.txt 
+   78  cat training_system/excercise4/file2.txt 
+   79  man tail
+   80  tail training_system/excercise4/file2.txt 
+   81  man tail
+   82  wc -l < tail
+   83  wc -l < tail training_system/excercise4/file2.txt 
+   84  tail training_system/excercise4/file2.txt > wc -l
+   85  tail training_system/excercise4/file2.txt 
+   86  tail training_system/excercise4/file2.txt | wc -l
+   87  man wc
+   88  grep *.log | wc -w warning
+   89  grep /var/log*.log | wc -w warning
+   90  grep
+   91  man grep
+   92  grep -e "/var/log/*.log"
+   93  grep warning /var/log/*.log
+   94  grep warning /var/log/*.log | wc -
+   95  grep warning /var/log/*.log | wc -l
+   96  man grep
+   97  grep -s warning /var/log/*.log | wc -l
+   98  grep -s warning /var/log/*.log
+   99  grep -s warning /var/log/*.log | wc -l
+  100  grep -s warning /var/log/*.log | wc -l > file3.txt
+  101  history > answer.txt
+  102  grep -s warning /var/log/*.log | wc -l > training_system/excercise4/file3.txt
+  103  history > training_system/excercise4/answer.txt
