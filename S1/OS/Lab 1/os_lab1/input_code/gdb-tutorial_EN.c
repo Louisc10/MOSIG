@@ -163,20 +163,24 @@ int main (void)
           suppress the code that follows!  If you try to jump over,
           gdb will indicate that you try to jump out of the program!
         */
+        /*
         j = 1;
         while (j > 0) {
             j++;
         }
+        */
 
         i = 10;
         while (i >= 0) {
             i--;
         }
 
+        /*
         i = 0; j = 0;
         while (i == j) {
             i++; j++;
         }
+        */
         
         /*
           That's all, you have finished and you know almost everything

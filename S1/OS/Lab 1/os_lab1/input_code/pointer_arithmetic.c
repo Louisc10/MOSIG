@@ -20,6 +20,7 @@ int main()
     printf("\n\t\tp1 = %p\n", (void*)p1);
     p1++;
     printf("after p1++, \tp1 = %p \n", (void*)p1);
+    printf("Differences, \tp1 - a = %lu bytes\n", (p1 - &a) * sizeof(unsigned long));
 
     printf("\n\t\tp2 = %p\n", (void*)p2);
     p2 = p2 + 10;
