@@ -1,3 +1,61 @@
+    1  pwd
+    2  ls
+    3  cd S1/C/ensimag-rappeldec/build/
+    4  make hello
+    5  cd ../..
+    6  git clone https://github.com/gmounie/ensimag-rappeldec.git
+    7  cd ensimag-rappeldec/build/
+    8  make hello
+    9  cmake ..
+   10  make hello
+   11  hello
+   12  gcc hello
+   13  gdb hello
+   14  gdb ./hello
+   15  make hello
+   16  gdb ./hello
+   17  ls
+   18  gdb hello
+   19  make\
+   20  make
+   21  clear
+   22  make
+   23  make check
+   24  gdb ./hello
+   25  cd ../../
+   26  pwd
+   27  cd ./
+   28  cd/
+   29  cd /
+   30  ks
+   31  ls\
+   32  ls
+   33  cd ~
+   34  ls
+   35  cd S1/C/
+   36  git clone https://github.com/gmounie/ensimag-rappeldec.git
+   37  cd ensimag-rappeldec/build/
+   38  cmake ..
+   39  pwd
+   40  make
+   41  gdb ./hello
+   42  q
+   43  make flottants
+   44  gdb ./floattants
+   45  gdb flottants
+   46  make flottants
+   47  gdb flottants
+   48  make binaires
+   49  gdb binaires
+   50  make qsort
+   51  make fqsort
+   52  gdb fqsort
+   53  make fqsort
+   54  gdb fqsort
+   55  make fqsort
+   56  gdb fqsort
+   57  make fqsort
+   58  gdb fqsort
    59  pwd
    60  mkdir training_system/excercise4
    61  mkdir -r training_system/excercise4
@@ -41,5 +99,3 @@
    99  grep -s warning /var/log/*.log | wc -l
   100  grep -s warning /var/log/*.log | wc -l > file3.txt
   101  history > answer.txt
-  102  grep -s warning /var/log/*.log | wc -l > training_system/excercise4/file3.txt
-  103  history > training_system/excercise4/answer.txt
