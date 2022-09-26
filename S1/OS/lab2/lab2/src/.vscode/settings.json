@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        ".blade.php": "html",
+        ".tpl": "html",
+        "my_mmap.h": "c",
+        "mem_alloc.h": "c"
+    }
+}
