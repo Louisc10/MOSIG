@@ -17,5 +17,4 @@ typedef struct mem_pool {
     pool_category_t pool_type;
 } mem_pool_t;
 
-
 #endif /* !_MEM_ALLOC_TYPES_H_ */
