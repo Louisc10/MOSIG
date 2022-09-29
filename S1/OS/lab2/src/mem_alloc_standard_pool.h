@@ -30,6 +30,7 @@ typedef struct mem_std_block_headerfooter
 typedef struct mem_std_free_block
 {
     mem_std_block_header_footer_t header;
+    mem_std_block_header_footer_t footer;
     struct mem_std_free_block *prev;
     struct mem_std_free_block *next;
 } mem_std_free_block_t;
