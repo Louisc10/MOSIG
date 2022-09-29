@@ -1,0 +1,1 @@
+/usr/bin/cc -g -Wall -Wextra -Wconversion -std=gnu18 CMakeFiles/bug_allocinstack.dir/src/bugs/bug_allocinstack.c.o -o bug_allocinstack 

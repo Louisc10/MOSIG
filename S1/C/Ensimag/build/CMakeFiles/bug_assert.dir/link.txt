@@ -1,0 +1,1 @@
+/usr/bin/cc -g -Wall -Wextra -Wconversion -std=gnu18 CMakeFiles/bug_assert.dir/src/bugs/bug_assert.c.o -o bug_assert 

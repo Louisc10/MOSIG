@@ -1,0 +1,1 @@
+/usr/bin/cc -g -Wall -Wextra -Wconversion -std=gnu18 CMakeFiles/flottants.dir/src/flottants.c.o -o flottants 

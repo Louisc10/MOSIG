@@ -1,0 +1,1 @@
+/usr/bin/cc -g -Wall -Wextra -Wconversion -std=gnu18 CMakeFiles/bug_overreadheap_tiny.dir/src/bugs/bug_overreadheap_tiny.c.o -o bug_overreadheap_tiny 

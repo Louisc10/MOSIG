@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -g -Wall -Wextra -Wconversion -std=gnu++17 -shared -Wl,-soname,libensigc.so -o libensigc.so CMakeFiles/ensigc.dir/src/elempool.c.o CMakeFiles/ensigc.dir/src/bitset1000.cpp.o 

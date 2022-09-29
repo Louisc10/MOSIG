@@ -1,0 +1,1 @@
+/usr/bin/cc -g -Wall -Wextra -Wconversion -std=gnu18 CMakeFiles/bug_overwriteheap_tiny.dir/src/bugs/bug_overwriteheap_tiny.c.o -o bug_overwriteheap_tiny 
