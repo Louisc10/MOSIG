@@ -30,7 +30,7 @@ void init_standard_pool(mem_pool_t *p, size_t size, size_t min_request_size, siz
     free_mem->prev = NULL;
 
     set_block_free(&free_mem->header);
-    set_block_size(&free_mem->header, size - (8*2));
+    set_block_size(&free_mem->header, size);
 }
 
 void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
@@ -40,8 +40,8 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
     struct mem_std_allocated_block* allocated = pool->first_free;
     struct mem_std_allocated_block* temp = (char*)allocated + 8;
     set_block_used(&allocated->header);
-    set_block_size(&allocated->header, size-(8*2));
-    pool->first_free = (char*)allocated + size+(8*2);
+    set_block_size(&allocated->header, size);
+    pool->first_free = (char*)allocated + size+ (8*2);
     
     return temp;
 }
@@ -50,11 +50,36 @@ void mem_free_standard_pool(mem_pool_t *pool, void *addr)
 {
     /* TODO Free Standard Pool IMPLEMENTED */
     printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
+    struct mem_std_free_block* freed = (char*)addr - 8;
+    set_block_free(&freed->header);
+    struct mem_std_free_block* curr = pool->first_free;
+    if(freed < curr){
+        freed->prev = NULL; 
+        freed->next = pool->first_free;
+        curr->prev = freed;
+        pool->first_free = freed;
+    }
+    else{
+        while(curr->next != NULL && curr->next < freed){
+            if(curr->next != NULL){
+                curr = curr->next;
+            }
+            else{
+                break;
+            }
+        }
+        freed->next = curr->next;
+        freed->prev = curr;
+        curr->next->prev = freed;
+        curr->next = freed;
+    }
+    
 }
 
 size_t mem_get_allocated_block_size_standard_pool(mem_pool_t *pool, void *addr)
 {
     /* TODO Get Allocated Block Size IMPLEMENTED */
     printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
-    return 0;
+    struct mem_std_allocated_block* allocated = (char*)addr -8;
+    return get_block_size(&allocated->header);
 }
