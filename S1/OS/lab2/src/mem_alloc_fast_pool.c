@@ -16,7 +16,7 @@ void init_fast_pool(mem_pool_t *p, size_t size, size_t min_request_size, size_t 
     struct mem_fast_free_block *prev = (struct mem_fast_free_block*) temp, *curr;
     p->start = p->first_free = prev;
     for(int i = 1; i < total_block; i++){
-        curr = (char*) prev + max_request_size;
+        curr = (struct mem_fast_free_block*)((char*) prev + max_request_size);
         prev->next = curr;
         prev = curr;
     }
