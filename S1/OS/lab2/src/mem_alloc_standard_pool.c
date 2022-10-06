@@ -22,8 +22,25 @@ std_pool_placement_policy_t std_pool_policy = DEFAULT_STDPOOL_POLICY;
 const int SIZE_OF_POINTER = 8;
 
 void set_free_size(struct mem_std_free_block *address, size_t size){
+    // mem_std_block_header_footer_t header = (void) address;
+    // address->header = header;
+
     set_block_free(&address->header);
     set_block_size(&address->header, size);
+
+    set_block_free(&address->footer);
+    set_block_size(&address->footer, size);
+}
+
+void set_allocated_size(struct mem_std_free_block *address, size_t size){
+    // mem_std_block_header_footer_t header = (void) address;
+    // address->header = header;
+
+    set_block_used(&address->header);
+    set_block_size(&address->header, size);
+
+    set_block_used(&address->footer);
+    set_block_size(&address->footer, size);
 }
 
 void init_standard_pool(mem_pool_t *p, size_t size, size_t min_request_size, size_t max_request_size)
@@ -56,9 +73,8 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
     if(curr != NULL){
         int remaining_size = get_block_size(&curr->header) - (size + (SIZE_OF_POINTER*2));
 
-        struct mem_std_allocated_block* allocated = curr;
-        set_block_used(&allocated->header);
-        set_block_size(&allocated->header, size);
+        struct mem_std_allocated_block* allocated = curr;\
+        set_allocated_size(allocated, size);
         if(remaining_size < (SIZE_OF_POINTER*4)){
             struct mem_std_free_block *temp = curr;
             if(temp->prev != NULL)
@@ -74,10 +90,11 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
                 curr->next->prev = new_free;
             if(curr->prev != NULL)
                 curr->prev->next = new_free;
-            set_block_free(&new_free->header);
-            set_block_size(&new_free->header, remaining_size);
+
             if(curr == pool->first_free)
                 pool->first_free = new_free;
+            
+            set_free_size(new_free, remaining_size);
         }
         return (char*)allocated + SIZE_OF_POINTER;
     }
