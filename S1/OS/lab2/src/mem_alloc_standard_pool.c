@@ -70,22 +70,9 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
         curr = curr->next;
     }
     if(curr != NULL){
-        /*
-        struct mem_std_free_block* temp = (void*) curr + (size + (8*2));
-        temp->next = curr->next;
-        temp->prev = curr->prev;
-        set_block_free(&temp->header);
-        int remaining_size = get_block_size(&curr->header) - (size + (8*2));
-        set_block_size(&temp->header, remaining_size);
-
-        struct mem_std_allocated_block *c2 = curr;
-        set_block_used(&c2->header);
-        set_block_size(&c2->header, size);
-        return (struct mem_std_allocated_block *) c2 + (8);*/
     
         int remaining_size = get_block_size(&curr->header) - (size + (8*2));
         struct mem_std_allocated_block* allocated = curr;
-        struct mem_std_allocated_block* temp = (char*)allocated + 8;
         set_block_used(&allocated->header);
         set_block_size(&allocated->header, size);
 
@@ -101,10 +88,10 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
         if(curr == pool->first_free)
             pool->first_free = new_free;
         
-        return temp;
+        return (char*)allocated + 8;
 
     }
-    return curr;
+    return NULL;
 }
 
 void mem_free_standard_pool(mem_pool_t *pool, void *addr)
@@ -150,27 +137,48 @@ void mem_free_standard_pool(mem_pool_t *pool, void *addr)
     struct mem_std_free_block* freed = (void*)((char*)addr - 8);
     set_block_free(&freed->header);
     struct mem_std_free_block* curr = pool->first_free;
+    bool isStart = false;
+
     if(freed < curr){
         freed->prev = NULL; 
-        freed->next = pool->first_free;
+        freed->next = curr;
         curr->prev = freed;
         pool->first_free = freed;
+        isStart = true;
     }
-    // else{
-    //     while(curr != NULL){
-    //         if(curr->next != NULL && curr->next < freed){
-    //             curr = curr->next;
-    //         }
-    //         else{
-    //             freed->next = curr->next;
-    //             freed->prev = curr;
-    //             if(curr->next != NULL)
-    //                 curr->next->prev = freed;
-    //             curr->next = freed;
-    //             break;
-    //         }
-    //     }
-    // }
+    else{
+        while(curr != NULL){
+            if(curr->next != NULL && curr->next < freed){
+                curr = curr->next;
+            }
+            else{
+                freed->next = curr->next;
+                freed->prev = curr;
+                if(curr->next != NULL)
+                    curr->next->prev = freed;
+                curr->next = &freed;
+                break;
+            }
+        }
+    }
+    if(freed->next == (void *) freed + get_block_size(&freed->header) + (8*2)){
+        struct mem_std_free_block* temp = freed->next;
+        freed->next = temp->next;
+        if(temp->next != NULL)
+            temp->next->prev = freed;
+
+        int total_size = get_block_size(&freed->header)+ get_block_size(&temp->header) + (8*2);
+        set_block_size(&freed->header, total_size);
+        set_block_free(&freed->header);
+    }
+    if(!isStart && freed == (void *) curr + get_block_size(&curr->header) + (8*2)){
+        curr->next = freed->next;
+        if(freed->next != NULL)
+            freed->next->prev = curr;
+        int total_size = get_block_size(&curr->header)+ get_block_size(&freed->header) + (8*2);
+        set_block_size(&curr->header, total_size);
+        set_block_free(&curr->header);
+    }
     
 }
 
