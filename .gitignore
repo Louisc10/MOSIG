@@ -1,0 +1,11 @@
+S1/OS/lab2/src/libmalloc.o
+S1/OS/lab2/src/mem_alloc_fast_pool-lib.o
+S1/OS/lab2/src/mem_alloc_sim.o
+S1/OS/lab2/src/mem_alloc_standard_pool_types-lib.o
+S1/OS/lab2/src/mem_alloc_standard_pool-lib.o
+S1/OS/lab2/src/mem_alloc-lib.o
+S1/OS/lab2/src/mem_shell
+S1/OS/lab2/src/mem_shell_sim.o
+S1/OS/lab2/src/mem_shell.o
+S1/OS/lab2/src/my_mmap-lib.o
+S1/OS/lab2/src/bin/mem_shell_sim
