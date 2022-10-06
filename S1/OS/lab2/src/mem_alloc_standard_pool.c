@@ -67,29 +67,36 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
 
     struct mem_std_free_block* curr = pool->first_free;
     while(!useableMemory(curr, size)){
+        printf(">>%p (%d)\n", curr, get_block_size(&curr->header));
         curr = curr->next;
     }
     if(curr != NULL){
-    
         int remaining_size = get_block_size(&curr->header) - (size + (8*2));
+
         struct mem_std_allocated_block* allocated = curr;
         set_block_used(&allocated->header);
         set_block_size(&allocated->header, size);
-
-        struct mem_std_free_block* new_free = (void *)((char*)allocated + (size+ (8*2)));
-        new_free->next = curr->next;
-        new_free->prev = curr->prev;
-        if(curr->next != NULL)
-            curr->next->prev = new_free;
-        if(curr->prev != NULL)
-            curr->prev->next = new_free;
-        set_block_free(&new_free->header);
-        set_block_size(&new_free->header, remaining_size);
-        if(curr == pool->first_free)
-            pool->first_free = new_free;
-        
+        if(remaining_size < (8*4)){
+            struct mem_std_free_block *temp = curr;
+            if(temp->prev != NULL)
+                temp->prev->next = temp->next;
+            if(temp->next != NULL)
+                temp->next->prev = temp->prev;
+        }
+        else{
+            struct mem_std_free_block* new_free = (void *)((char*)allocated + (size+ (8*2)));
+            new_free->next = curr->next;
+            new_free->prev = curr->prev;
+            if(curr->next != NULL)
+                curr->next->prev = new_free;
+            if(curr->prev != NULL)
+                curr->prev->next = new_free;
+            set_block_free(&new_free->header);
+            set_block_size(&new_free->header, remaining_size);
+            if(curr == pool->first_free)
+                pool->first_free = new_free;
+        }
         return (char*)allocated + 8;
-
     }
     return NULL;
 }
@@ -168,6 +175,8 @@ void mem_free_standard_pool(mem_pool_t *pool, void *addr)
             temp->next->prev = freed;
 
         int total_size = get_block_size(&freed->header)+ get_block_size(&temp->header) + (8*2);
+        
+        set_block_used(&temp->header);
         set_block_size(&freed->header, total_size);
         set_block_free(&freed->header);
     }
@@ -176,6 +185,8 @@ void mem_free_standard_pool(mem_pool_t *pool, void *addr)
         if(freed->next != NULL)
             freed->next->prev = curr;
         int total_size = get_block_size(&curr->header)+ get_block_size(&freed->header) + (8*2);
+        
+        set_block_used(&freed->header);
         set_block_size(&curr->header, total_size);
         set_block_free(&curr->header);
     }
