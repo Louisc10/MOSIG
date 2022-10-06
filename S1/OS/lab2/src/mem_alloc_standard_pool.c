@@ -19,24 +19,28 @@ std_pool_placement_policy_t std_pool_policy = DEFAULT_STDPOOL_POLICY;
 
 /////////////////////////////////////////////////////////////////////////////
 
+const int SIZE_OF_POINTER = 8;
+
+void set_free_size(struct mem_std_free_block *address, size_t size){
+    set_block_free(&address->header);
+    set_block_size(&address->header, size);
+}
+
 void init_standard_pool(mem_pool_t *p, size_t size, size_t min_request_size, size_t max_request_size)
 {
     /* TODO Init Standard Pool IMPLEMENTED */
     printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
     void* temp = my_mmap(size);
-    p->start = p->first_free = temp;
-    p->end = (char*) temp + size; 
     struct mem_std_free_block *free_mem = temp;
+    p->start = p->first_free = free_mem;
+    p->end = (char*) temp + size-(SIZE_OF_POINTER*4); 
     free_mem->next = NULL;
     free_mem->prev = NULL;
-
-    set_block_free(&free_mem->header);
-    set_block_size(&free_mem->header, size-(8*2));
+    set_free_size(free_mem, size - (SIZE_OF_POINTER*2));
 }
 
 bool useableMemory(struct mem_std_free_block *curr, int size){
 	return curr != NULL && get_block_size(&curr->header) >= size && is_block_free(&curr->header);
-    // return true;
 }
 
 void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
@@ -44,39 +48,18 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
     /* TODO Alloc Standard Pool IMPLEMENTED */
     printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
 
-/*
-    struct data *curr = pool;
-	while(!useableMemory(curr, size)){
-		curr = curr->next;
-	}
-	if(curr != NULL){
-		struct data *temp = (struct data *)malloc(sizeof(struct data));
-		temp->next = curr->next;
-		temp->prev = curr;
-		temp->isUsed = false;
-		temp->size = (curr->size) - (size + (8*2));
-		
-		if(curr->next != NULL)
-			curr->next->prev = temp;
-		curr->next = temp;
-		curr->isUsed = true;
-		curr->size = size;
-	}
-	return pool;
-*/  
-
     struct mem_std_free_block* curr = pool->first_free;
     while(!useableMemory(curr, size)){
         printf(">>%p (%d)\n", curr, get_block_size(&curr->header));
         curr = curr->next;
     }
     if(curr != NULL){
-        int remaining_size = get_block_size(&curr->header) - (size + (8*2));
+        int remaining_size = get_block_size(&curr->header) - (size + (SIZE_OF_POINTER*2));
 
         struct mem_std_allocated_block* allocated = curr;
         set_block_used(&allocated->header);
         set_block_size(&allocated->header, size);
-        if(remaining_size < (8*4)){
+        if(remaining_size < (SIZE_OF_POINTER*4)){
             struct mem_std_free_block *temp = curr;
             if(temp->prev != NULL)
                 temp->prev->next = temp->next;
@@ -84,7 +67,7 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
                 temp->next->prev = temp->prev;
         }
         else{
-            struct mem_std_free_block* new_free = (void *)((char*)allocated + (size+ (8*2)));
+            struct mem_std_free_block* new_free = (void *)((char*)allocated + (size+ (SIZE_OF_POINTER*2)));
             new_free->next = curr->next;
             new_free->prev = curr->prev;
             if(curr->next != NULL)
@@ -96,7 +79,7 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
             if(curr == pool->first_free)
                 pool->first_free = new_free;
         }
-        return (char*)allocated + 8;
+        return (char*)allocated + SIZE_OF_POINTER;
     }
     return NULL;
 }
@@ -105,44 +88,10 @@ void mem_free_standard_pool(mem_pool_t *pool, void *addr)
 {
     /* TODO Free Standard Pool IMPLEMENTED */
     printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
-    /*
-    struct data *curr = pool;
-	while(curr != NULL && curr != addr){
-		curr = curr->next;
-	}
-	if(curr != NULL){S
-		bool flag = false;
-		if(isFree(curr->next)){
-			flag = true;
-			puts("Case 1");
-			struct data *temp = curr->next;
-			curr->next = temp->next;
-			if(temp->next != NULL)
-				temp->next->prev = curr;
-			curr->size+= temp->size + (8*2);
-			curr->isUsed = false;
-			free(temp);
-		}
-		
-		if(isFree(curr->prev)){
-			flag = true;
-			puts("Case 2");
-			struct data *temp = curr;
-			curr->prev->next = temp->next;
-			curr->next->prev = temp->prev;
-			temp->prev->size+= temp->size + (8*2);
-			free(temp);
-		}
-		
-		if(!flag){
-			puts("Case 3");
-			curr->isUsed = false;
-		}
-	}
-	return pool;
-    */
-    struct mem_std_free_block* freed = (void*)((char*)addr - 8);
-    set_block_free(&freed->header);
+
+    struct mem_std_free_block* freed = (void*)((char*)addr - SIZE_OF_POINTER);
+    set_free_size(freed, get_block_size(&freed->header));
+
     struct mem_std_free_block* curr = pool->first_free;
     bool isStart = false;
 
@@ -168,27 +117,27 @@ void mem_free_standard_pool(mem_pool_t *pool, void *addr)
             }
         }
     }
-    if(freed->next == (void *) freed + get_block_size(&freed->header) + (8*2)){
+    if(freed->next == (void *) freed + get_block_size(&freed->header) + (SIZE_OF_POINTER*2)){
         struct mem_std_free_block* temp = freed->next;
         freed->next = temp->next;
         if(temp->next != NULL)
             temp->next->prev = freed;
 
-        int total_size = get_block_size(&freed->header)+ get_block_size(&temp->header) + (8*2);
+        int total_size = get_block_size(&freed->header)+ get_block_size(&temp->header) + (SIZE_OF_POINTER*2);
         
         set_block_used(&temp->header);
-        set_block_size(&freed->header, total_size);
-        set_block_free(&freed->header);
+        
+        set_free_size(freed, total_size);
     }
-    if(!isStart && freed == (void *) curr + get_block_size(&curr->header) + (8*2)){
+    if(!isStart && freed == (void *) curr + get_block_size(&curr->header) + (SIZE_OF_POINTER*2)){
         curr->next = freed->next;
         if(freed->next != NULL)
             freed->next->prev = curr;
-        int total_size = get_block_size(&curr->header)+ get_block_size(&freed->header) + (8*2);
+        int total_size = get_block_size(&curr->header)+ get_block_size(&freed->header) + (SIZE_OF_POINTER*2);
         
         set_block_used(&freed->header);
-        set_block_size(&curr->header, total_size);
-        set_block_free(&curr->header);
+
+        set_free_size(curr, total_size);
     }
     
 }
@@ -197,6 +146,6 @@ size_t mem_get_allocated_block_size_standard_pool(mem_pool_t *pool, void *addr)
 {
     /* TODO Get Allocated Block Size IMPLEMENTED */
     printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
-    struct mem_std_allocated_block* allocated = (void*)((char*)addr -8);
+    struct mem_std_allocated_block* allocated = (void*)((char*)addr -SIZE_OF_POINTER);
     return get_block_size(&allocated->header);
 }
