@@ -8,4 +8,3 @@ S1/OS/lab2/src/mem_shell
 S1/OS/lab2/src/mem_shell_sim.o
 S1/OS/lab2/src/mem_shell.o
 S1/OS/lab2/src/my_mmap-lib.o
-S1/OS/lab2/src/bin/mem_shell_sim
