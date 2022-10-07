@@ -28,19 +28,77 @@ void set_free_size(struct mem_std_free_block *address, size_t size){
     set_block_free(&address->header);
     set_block_size(&address->header, size);
 
-    set_block_free(&address->footer);
-    set_block_size(&address->footer, size);
+    // set_block_free(&address->footer);
+    // set_block_size(&address->footer, size);
 }
 
-void set_allocated_size(struct mem_std_free_block *address, size_t size){
+void set_allocated_size(struct mem_std_allocated_block *address, size_t size){
     // mem_std_block_header_footer_t header = (void) address;
     // address->header = header;
 
     set_block_used(&address->header);
     set_block_size(&address->header, size);
 
-    set_block_used(&address->footer);
-    set_block_size(&address->footer, size);
+    // set_block_used(&address->footer);
+    // set_block_size(&address->footer, size);
+}
+
+void sort_block(mem_pool_t *pool){
+    struct mem_std_free_block *curr = pool->first_free;
+    struct mem_std_free_block *temp = curr->next;
+    bool compare = (void *)curr > (void *)temp;
+    bool isFirst = true;
+    printf(">> Curr %p\nTemp %p\nResult %s\n\n", (void *)curr ,(void *)temp, compare? "true": "false");
+    while(temp != NULL && compare){
+        printf(">! Curr %p\nTemp %p\nResult %s\n", (void *)curr ,(void *)temp, compare? "true": "false");
+        printf(" > Curr Next %p\nCurr->Prev %p\n", (void *)curr->next ,(void *)curr->prev);
+        printf(" > Temp Next %p\nTemp->Prev %p\n", (void *)temp->next ,(void *)temp->prev);
+        curr->next = temp->next;
+        temp->prev = curr->prev;
+        curr->prev = temp;
+        temp->next = curr;
+        if(isFirst){
+            pool->first_free = (void *) temp;
+            isFirst = false;
+        }
+
+        printf(" > Curr Next %p\nCurr->Prev %p\n", (void *)curr->next ,(void *)curr->prev);
+        printf(" > Temp Next %p\nTemp->Prev %p\n", (void *)temp->next ,(void *)temp->prev);
+        temp = curr->next;
+        printf("Curr %p\nTemp %p\n\n\n", (void *)curr ,(void *)temp);
+        compare = (void *)curr > (void *)temp;
+    };
+}
+
+int get_full_size_of_block(void *addr){
+    return get_block_size(&((struct mem_std_allocated_block*)addr)->header) + (SIZE_OF_POINTER*2);
+}
+
+void merge_block(struct mem_std_free_block *freed){
+    if(freed->next == (void *) freed + get_full_size_of_block(freed)){
+        struct mem_std_free_block* temp = freed->next;
+        freed->next = temp->next;
+        if(temp->next != NULL)
+            temp->next->prev = freed;
+
+        int total_size = get_block_size(&freed->header)+ get_full_size_of_block(temp);
+        
+        set_block_used(&temp->header);
+        set_free_size(freed, total_size);
+    }
+
+    struct mem_std_free_block *curr = freed->prev;
+    if(curr != NULL && freed == (void *) curr + get_full_size_of_block(curr)){
+        curr->next = freed->next;
+        if(freed->next != NULL)
+            freed->next->prev = curr;
+        int total_size = get_block_size(&curr->header)+ get_full_size_of_block(freed);
+        
+        set_block_used(&freed->header);
+        // set_block_used(&freed->footer);
+
+        set_free_size(curr, total_size);
+    }
 }
 
 void init_standard_pool(mem_pool_t *p, size_t size, size_t min_request_size, size_t max_request_size)
@@ -73,7 +131,7 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
     if(curr != NULL){
         int remaining_size = get_block_size(&curr->header) - (size + (SIZE_OF_POINTER*2));
 
-        struct mem_std_allocated_block* allocated = curr;\
+        struct mem_std_allocated_block* allocated = curr;
         set_allocated_size(allocated, size);
         if(remaining_size < (SIZE_OF_POINTER*4)){
             struct mem_std_free_block *temp = curr;
@@ -110,52 +168,31 @@ void mem_free_standard_pool(mem_pool_t *pool, void *addr)
     set_free_size(freed, get_block_size(&freed->header));
 
     struct mem_std_free_block* curr = pool->first_free;
-    bool isStart = false;
-
-    if(freed < curr){
+    
+    // if(freed > curr){
+    //     struct mem_std_free_block* temp = curr;
+    //     // while(curr != NULL && curr < freed){
+    //     //     temp = curr;
+    //     //     curr = curr->next;
+    //     // }
+    //     if(curr != NULL){
+    //         freed->next = temp->next;
+    //         freed->prev = temp;
+    //         if(temp->next != NULL)
+    //             temp->next->prev = freed;
+    //         temp->next = freed;
+    //     }
+    // }
+    // else{
         freed->prev = NULL; 
         freed->next = curr;
         curr->prev = freed;
-        pool->first_free = freed;
-        isStart = true;
-    }
-    else{
-        while(curr != NULL){
-            if(curr->next != NULL && curr->next < freed){
-                curr = curr->next;
-            }
-            else{
-                freed->next = curr->next;
-                freed->prev = curr;
-                if(curr->next != NULL)
-                    curr->next->prev = freed;
-                curr->next = &freed;
-                break;
-            }
-        }
-    }
-    if(freed->next == (void *) freed + get_block_size(&freed->header) + (SIZE_OF_POINTER*2)){
-        struct mem_std_free_block* temp = freed->next;
-        freed->next = temp->next;
-        if(temp->next != NULL)
-            temp->next->prev = freed;
+        pool->first_free = (void*) freed;
 
-        int total_size = get_block_size(&freed->header)+ get_block_size(&temp->header) + (SIZE_OF_POINTER*2);
-        
-        set_block_used(&temp->header);
-        
-        set_free_size(freed, total_size);
-    }
-    if(!isStart && freed == (void *) curr + get_block_size(&curr->header) + (SIZE_OF_POINTER*2)){
-        curr->next = freed->next;
-        if(freed->next != NULL)
-            freed->next->prev = curr;
-        int total_size = get_block_size(&curr->header)+ get_block_size(&freed->header) + (SIZE_OF_POINTER*2);
-        
-        set_block_used(&freed->header);
-
-        set_free_size(curr, total_size);
-    }
+    // }
+    // printf("Exited\n");
+    sort_block(pool);
+    merge_block(freed);
     
 }
 
