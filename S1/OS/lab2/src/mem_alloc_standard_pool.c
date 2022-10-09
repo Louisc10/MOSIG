@@ -21,6 +21,24 @@ std_pool_placement_policy_t std_pool_policy = DEFAULT_STDPOOL_POLICY;
 
 const int SIZE_OF_POINTER = 8;
 
+void printStatus(mem_pool_t *pool){
+    void* curr = pool->start;
+    while(curr < pool->end){
+        int size = get_block_size(&((struct mem_std_free_block*)curr)->header);
+        bool isUsed = is_block_used(&((struct mem_std_free_block*)curr)->header);
+        printf("Address : %d\n", (void*) curr - pool->start + 8);
+        printf("Size    : %d\n", size);
+        printf("Status  : %s\n", isUsed? "Used" : "Free");
+        if(!isUsed){
+            printf("Prev    : %d\n", ((struct mem_std_free_block*)curr)->prev != NULL? ((void *) ((struct mem_std_free_block*)curr)->prev) - pool->start + 8: -1);
+            printf("Next    : %d\n", ((struct mem_std_free_block*)curr)->next != NULL? ((void *) ((struct mem_std_free_block*)curr)->next) - pool->start + 8: -1);
+        }
+        curr += size + (SIZE_OF_POINTER *2);
+        puts("");
+    }
+    puts("====================");
+}
+
 void set_free_size(struct mem_std_free_block *address, size_t size){
     set_block_free(&address->header);
     set_block_size(&address->header, size);
@@ -31,10 +49,34 @@ void set_allocated_size(struct mem_std_allocated_block *address, size_t size){
     set_block_size(&address->header, size);
 }
 
+bool get_best_fit_compare(struct mem_std_free_block *curr, struct mem_std_free_block *temp){
+    int size_curr = get_block_size(&curr->header);
+    int size_temp = get_block_size(&temp->header);
+    return size_curr >= size_temp;
+}
+
+bool get_first_fit_compare(struct mem_std_free_block *curr, struct mem_std_free_block *temp){
+    return (void *)curr > (void *)temp;
+}
+
+void sort_best_fit(mem_pool_t *pool){
+
+}
+
 void sort_block(mem_pool_t *pool){
     struct mem_std_free_block *curr = pool->first_free;
     struct mem_std_free_block *temp = curr->next;
-    bool compare = (void *)curr > (void *)temp;
+    bool compare;
+    switch (STDPOOL_POLICY)
+    {
+    case 1:
+        compare = get_first_fit_compare(curr, temp);
+        break;
+    case 2:
+        compare = get_best_fit_compare(curr, temp);
+        break;
+    }
+     
     bool isFirst = true;
     printf(">> Curr %p\nTemp %p\nResult %s\n\n", (void *)curr ,(void *)temp, compare? "true": "false");
     while(temp != NULL && compare){
@@ -53,8 +95,19 @@ void sort_block(mem_pool_t *pool){
         printf(" > Curr Next %p\nCurr->Prev %p\n", (void *)curr->next ,(void *)curr->prev);
         printf(" > Temp Next %p\nTemp->Prev %p\n", (void *)temp->next ,(void *)temp->prev);
         temp = curr->next;
+        if(temp != NULL)
+            temp->prev = curr;
         printf("Curr %p\nTemp %p\n\n\n", (void *)curr ,(void *)temp);
-        compare = (void *)curr > (void *)temp;
+        
+        switch (STDPOOL_POLICY)
+        {
+        case 1:
+            compare = get_first_fit_compare(curr, temp);
+            break;
+        case 2:
+            compare = get_best_fit_compare(curr, temp);
+            break;
+        }
     };
 }
 
@@ -100,10 +153,12 @@ void init_standard_pool(mem_pool_t *p, size_t size, size_t min_request_size, siz
     free_mem->next = NULL;
     free_mem->prev = NULL;
     set_free_size(free_mem, size - (SIZE_OF_POINTER*2));
+
+    printStatus(p);
 }
 
 bool useableMemory(struct mem_std_free_block *curr, int size){
-    printf(">>%p (%d) need %d\n",curr, get_block_size(&curr->header), size);
+    printf(">>%p (%ld) need %d\n",curr, get_block_size(&curr->header), size);
 
 	return curr != NULL && get_block_size(&curr->header) >= size && is_block_free(&curr->header);
 }
@@ -112,10 +167,11 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
 {
     /* TODO Alloc Standard Pool IMPLEMENTED */
     printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
+    printf("<%d>\n", STDPOOL_POLICY);
 
     struct mem_std_free_block* curr = pool->first_free;
     while(!useableMemory(curr, size)){
-        printf(">>%p (%d)\n", curr, get_block_size(&curr->header));
+        printf(">>%p (%ld)\n", curr, get_block_size(&curr->header));
         curr = curr->next;
     }
     if(curr != NULL){
@@ -152,8 +208,10 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
             set_free_size(new_free, remaining_size);
         }
 
+        printStatus(pool);
         return (char*)allocated + SIZE_OF_POINTER;
     }
+    printStatus(pool);
     return NULL;
 }
 
@@ -173,6 +231,7 @@ void mem_free_standard_pool(mem_pool_t *pool, void *addr)
 
     sort_block(pool);
     merge_block(freed);
+    printStatus(pool);
     
 }
 
