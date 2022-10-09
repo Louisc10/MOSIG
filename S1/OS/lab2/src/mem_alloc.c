@@ -236,8 +236,41 @@ size_t memory_get_allocated_block_size(void *addr)
 
 void print_mem_state(void)
 {
-    /* TODO Print Mem State IMPLEMENTED */
-    printf("Please, implement me!\n");
+    int i, j;
+    for(i = 0; i < 3; i++)
+    {
+        int count_block =  mem_pools[i].pool_size / mem_pools[i].max_request_size;
+        printf("\nFast Pool No.%d has %d blocks:\n", i, count_block);
+        int pool_state_array[count_block];
+        for(j = 0; j < count_block; j++)
+        {
+            pool_state_array[j] = 1;
+        }
+        struct mem_fast_free_block *current_free = (struct mem_fast_free_block*) mem_pools[i].first_free;
+        while(current_free)
+        {
+            int free_index = ((void *)current_free - (void *) mem_pools[i].start) / mem_pools[i].max_request_size;
+            pool_state_array[free_index] = 0;
+            current_free = (struct mem_fast_free_block*) current_free->next;
+        }
+
+        for(j = 0; j < count_block - 1; j++)
+        {
+            printf("%d-", pool_state_array[j]);
+        }
+        printf("%d\n", pool_state_array[count_block-1]);
+    }
+
+    printf("\nStandard Pool:\n");
+    struct mem_std_block_header_footer_t *current_header = (struct mem_std_block_header_footer_t*) mem_pools[3].start;
+    while(current_header && (current_header<=mem_pools[3].end)) 
+    {
+        int current_is_free = is_block_free(current_header);
+        size_t current_size = get_block_size(current_header);
+        printf("[Size: %zu, %s]->", current_size, (current_is_free == 1) ? "Free" : "Allocated");
+        current_header = (struct mem_std_block_header_footer_t*) ((void *) current_header + sizeof(current_header) * 2 + current_size);
+    }
+    printf("[NULL]\n");
 }
 
 void print_free_info(void *addr)
@@ -282,7 +315,6 @@ void print_alloc_error(int size)
  */
 int main(int argc, char **argv)
 {
-
     memory_init();
 
     int i;
@@ -299,6 +331,7 @@ int main(int argc, char **argv)
     memory_free(a);
 
     fprintf(stderr, "%lu\n", (long unsigned int)(memory_alloc(9)));
+
     return EXIT_SUCCESS;
 }
 #endif /* MAIN */
