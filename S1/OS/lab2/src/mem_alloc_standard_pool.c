@@ -22,25 +22,13 @@ std_pool_placement_policy_t std_pool_policy = DEFAULT_STDPOOL_POLICY;
 const int SIZE_OF_POINTER = 8;
 
 void set_free_size(struct mem_std_free_block *address, size_t size){
-    // mem_std_block_header_footer_t header = (void) address;
-    // address->header = header;
-
     set_block_free(&address->header);
     set_block_size(&address->header, size);
-
-    // set_block_free(&address->footer);
-    // set_block_size(&address->footer, size);
 }
 
 void set_allocated_size(struct mem_std_allocated_block *address, size_t size){
-    // mem_std_block_header_footer_t header = (void) address;
-    // address->header = header;
-
     set_block_used(&address->header);
     set_block_size(&address->header, size);
-
-    // set_block_used(&address->footer);
-    // set_block_size(&address->footer, size);
 }
 
 void sort_block(mem_pool_t *pool){
@@ -115,6 +103,8 @@ void init_standard_pool(mem_pool_t *p, size_t size, size_t min_request_size, siz
 }
 
 bool useableMemory(struct mem_std_free_block *curr, int size){
+    printf(">>%p (%d) need %d\n",curr, get_block_size(&curr->header), size);
+
 	return curr != NULL && get_block_size(&curr->header) >= size && is_block_free(&curr->header);
 }
 
@@ -130,17 +120,24 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
     }
     if(curr != NULL){
         int remaining_size = get_block_size(&curr->header) - (size + (SIZE_OF_POINTER*2));
-
-        struct mem_std_allocated_block* allocated = curr;
-        set_allocated_size(allocated, size);
+        struct mem_std_allocated_block* allocated;
+        
         if(remaining_size < (SIZE_OF_POINTER*4)){
             struct mem_std_free_block *temp = curr;
             if(temp->prev != NULL)
                 temp->prev->next = temp->next;
             if(temp->next != NULL)
                 temp->next->prev = temp->prev;
+
+            
+            if(curr == pool->first_free)
+                pool->first_free = curr->next;
+            allocated = curr;
+            set_allocated_size(allocated, size);
         }
         else{
+            allocated = curr;
+            set_allocated_size(allocated, size);
             struct mem_std_free_block* new_free = (void *)((char*)allocated + (size+ (SIZE_OF_POINTER*2)));
             new_free->next = curr->next;
             new_free->prev = curr->prev;
@@ -154,6 +151,7 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
             
             set_free_size(new_free, remaining_size);
         }
+
         return (char*)allocated + SIZE_OF_POINTER;
     }
     return NULL;
@@ -168,29 +166,11 @@ void mem_free_standard_pool(mem_pool_t *pool, void *addr)
     set_free_size(freed, get_block_size(&freed->header));
 
     struct mem_std_free_block* curr = pool->first_free;
-    
-    // if(freed > curr){
-    //     struct mem_std_free_block* temp = curr;
-    //     // while(curr != NULL && curr < freed){
-    //     //     temp = curr;
-    //     //     curr = curr->next;
-    //     // }
-    //     if(curr != NULL){
-    //         freed->next = temp->next;
-    //         freed->prev = temp;
-    //         if(temp->next != NULL)
-    //             temp->next->prev = freed;
-    //         temp->next = freed;
-    //     }
-    // }
-    // else{
-        freed->prev = NULL; 
-        freed->next = curr;
-        curr->prev = freed;
-        pool->first_free = (void*) freed;
+    freed->prev = NULL; 
+    freed->next = curr;
+    curr->prev = freed;
+    pool->first_free = (void*) freed;
 
-    // }
-    // printf("Exited\n");
     sort_block(pool);
     merge_block(freed);
     
