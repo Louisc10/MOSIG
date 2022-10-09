@@ -9,7 +9,7 @@ void init_fast_pool(mem_pool_t *p, size_t size, size_t min_request_size, size_t 
 {
     /* TODO Init Fast Pool IMPLEMENTED */
     //my_mmap is gonna used to initialize the pool
-    printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
+    //printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
     void* temp = my_mmap(size);
     int total_block = size/max_request_size;
     
@@ -27,7 +27,7 @@ void init_fast_pool(mem_pool_t *p, size_t size, size_t min_request_size, size_t 
 void *mem_alloc_fast_pool(mem_pool_t *pool, size_t size)
 {
     /* TODO Alloc Fast Pool IMPLEMENTED */
-    printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
+    //printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
     struct mem_fast_free_block* temp = ((struct mem_fast_free_block*) pool->first_free);
     if(temp == NULL){
         return NULL;
@@ -40,7 +40,7 @@ void *mem_alloc_fast_pool(mem_pool_t *pool, size_t size)
 void mem_free_fast_pool(mem_pool_t *pool, void *b)
 {
     /* TODO Free Fast Pool IMPLEMENTED */
-    printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
+    //printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
     ((struct mem_fast_free_block*)b)->next = ((struct mem_fast_free_block*) pool->first_free);
     pool->first_free = b;
 }
