@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <dlfcn.h>
+#include <stdbool.h>
 
 #include "mem_alloc.h"
 #include "mem_alloc_types.h"
@@ -63,11 +64,76 @@ static mem_pool_t standard_pool_1025_and_above = {
     .max_request_size = SIZE_MAX,
     .pool_type = STANDARD_POOL};
 
+int used_memories [NB_MEM_POOLS];
+
+void print_fast_mem(int pool){
+    int j;
+    int count_block =  mem_pools[pool].pool_size / mem_pools[pool].max_request_size;
+    fprintf(stderr, "\nFast Pool No.%d has %d blocks:\n", pool, count_block);
+    int pool_state_array[count_block];
+    for(j = 0; j < count_block; j++)
+    {
+        pool_state_array[j] = 1;
+    }
+    struct mem_fast_free_block *current_free = (struct mem_fast_free_block*) mem_pools[pool].first_free;
+    while(current_free)
+    {
+        int free_index = ((void *)current_free - (void *) mem_pools[pool].start) / mem_pools[pool].max_request_size;
+        pool_state_array[free_index] = 0;
+        current_free = (struct mem_fast_free_block*) current_free->next;
+    }
+
+    for(j = 0; j < count_block - 1; j++)
+    {
+        fprintf(stderr, "%d-", pool_state_array[j]);
+    }
+    fprintf(stderr, "%d\n", pool_state_array[count_block-1]);
+}
+
+void print_standard_mem(int pool){
+    fprintf(stderr, "\nStandard Pool %d:\n", pool);
+    struct mem_std_block_header_footer_t *current_header = (struct mem_std_block_header_footer_t*) mem_pools[3].start;
+    while(current_header && (current_header<=mem_pools[3].end)) 
+    {
+        int current_is_free = is_block_free(current_header);
+        size_t current_size = get_block_size(current_header);
+        fprintf(stderr, "[Size: %zu, %s]->", current_size, (current_is_free == 1) ? "Free" : "Allocated");
+        current_header = (struct mem_std_block_header_footer_t*) ((void *) current_header + sizeof(current_header) * 2 + current_size);
+    }
+    fprintf(stderr, "[NULL]\n");
+}
+
+void print_memory_states(int pool){
+    if(mem_pools[pool].pool_type == FAST_POOL)
+        print_fast_mem(pool);
+    else if(mem_pools[pool].pool_type == STANDARD_POOL)
+        print_standard_mem(pool);
+}
+
+int memory_checker(){
+    //TODO Add Memory Checker
+    bool needToFree = false;
+
+    for(int i = 0; i < NB_MEM_POOLS; i++){
+        if(used_memories[i] != 0){
+            needToFree = true;
+            fprintf(stderr, "You need to free memory in pool %d\n", i);
+            print_memory_states(i);
+        }
+    }
+
+    if(needToFree){
+        return -1;
+    }
+    return 0;
+}
+
 /* This function is automatically called upon the termination of a process. */
 void run_at_exit(void)
 {
     fprintf(stderr, "YEAH B-)\n");
     /* You are encouraged to insert more useful code ... */
+    // memory_checker();
 }
 
 /* 
@@ -150,6 +216,9 @@ void memory_init(void)
     o_free = dlsym(RTLD_NEXT, "free");
     o_realloc = dlsym(RTLD_NEXT, "realloc");
     o_calloc = dlsym(RTLD_NEXT, "calloc");
+
+    for(int i = 0; i < NB_MEM_POOLS; i++)
+        used_memories[i] = 0;
 }
 
 /* 
@@ -180,6 +249,7 @@ void *memory_alloc(size_t size)
     }
     else
     {
+        used_memories[i] ++;
         print_alloc_info(alloc_addr, size);
     }
     debug_printf("return %p\n", alloc_addr);
@@ -193,6 +263,7 @@ void *memory_alloc(size_t size)
 void memory_free(void *p)
 {
     int i;
+    bool flag = false;
 
     debug_printf("enter p = %p\n", p);
     i = find_pool_from_block_address(p);
@@ -200,15 +271,20 @@ void memory_free(void *p)
     switch (mem_pools[i].pool_type)
     {
     case FAST_POOL:
-        mem_free_fast_pool(&(mem_pools[i]), p);
+        flag = mem_free_fast_pool(&(mem_pools[i]), p);
         break;
     case STANDARD_POOL:
-        mem_free_standard_pool(&(mem_pools[i]), p);
+        flag = mem_free_standard_pool(&(mem_pools[i]), p);
         break;
     default: /* we should never reach this case */
         assert(0);
     }
-    print_free_info(p);
+    if(flag){
+        used_memories[i]--;
+        print_free_info(p);
+    }
+    else
+        fprintf(stderr, "The memory is already freed\n");
     debug_printf("exit\n");
 }
 
@@ -236,41 +312,11 @@ size_t memory_get_allocated_block_size(void *addr)
 
 void print_mem_state(void)
 {
-    int i, j;
-    for(i = 0; i < 3; i++)
+    int i;
+    for(i = 0; i < NB_MEM_POOLS; i++)
     {
-        int count_block =  mem_pools[i].pool_size / mem_pools[i].max_request_size;
-        printf("\nFast Pool No.%d has %d blocks:\n", i, count_block);
-        int pool_state_array[count_block];
-        for(j = 0; j < count_block; j++)
-        {
-            pool_state_array[j] = 1;
-        }
-        struct mem_fast_free_block *current_free = (struct mem_fast_free_block*) mem_pools[i].first_free;
-        while(current_free)
-        {
-            int free_index = ((void *)current_free - (void *) mem_pools[i].start) / mem_pools[i].max_request_size;
-            pool_state_array[free_index] = 0;
-            current_free = (struct mem_fast_free_block*) current_free->next;
-        }
-
-        for(j = 0; j < count_block - 1; j++)
-        {
-            printf("%d-", pool_state_array[j]);
-        }
-        printf("%d\n", pool_state_array[count_block-1]);
+        print_memory_states(i);
     }
-
-    printf("\nStandard Pool:\n");
-    struct mem_std_block_header_footer_t *current_header = (struct mem_std_block_header_footer_t*) mem_pools[3].start;
-    while(current_header && (current_header<=mem_pools[3].end)) 
-    {
-        int current_is_free = is_block_free(current_header);
-        size_t current_size = get_block_size(current_header);
-        printf("[Size: %zu, %s]->", current_size, (current_is_free == 1) ? "Free" : "Allocated");
-        current_header = (struct mem_std_block_header_footer_t*) ((void *) current_header + sizeof(current_header) * 2 + current_size);
-    }
-    printf("[NULL]\n");
 }
 
 void print_free_info(void *addr)

@@ -209,12 +209,14 @@ void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size)
     return NULL;
 }
 
-void mem_free_standard_pool(mem_pool_t *pool, void *addr)
+bool mem_free_standard_pool(mem_pool_t *pool, void *addr)
 {
     /* TODO Free Standard Pool IMPLEMENTED */
     //printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
 
     struct mem_std_free_block* freed = (void*)((char*)addr - SIZE_OF_POINTER);
+    if(is_block_free(&freed->header))
+        return false;
     set_free_size(freed, get_block_size(&freed->header));
 
     struct mem_std_free_block* curr = pool->first_free;
@@ -226,7 +228,7 @@ void mem_free_standard_pool(mem_pool_t *pool, void *addr)
     sort_block(pool);
     merge_block(freed);
     // printStatus(pool);
-    
+    return true;
 }
 
 size_t mem_get_allocated_block_size_standard_pool(mem_pool_t *pool, void *addr)

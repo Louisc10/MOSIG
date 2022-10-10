@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "mem_alloc_fast_pool.h"
 #include "my_mmap.h"
@@ -37,12 +38,22 @@ void *mem_alloc_fast_pool(mem_pool_t *pool, size_t size)
     return temp;
 }
 
-void mem_free_fast_pool(mem_pool_t *pool, void *b)
+bool mem_free_fast_pool(mem_pool_t *pool, void *b)
 {
     /* TODO Free Fast Pool IMPLEMENTED */
     //printf("%s:%d: Please, implement me!\n", __FUNCTION__, __LINE__);
+    struct mem_fast_free_block* curr = pool->first_free;
+    while(curr != NULL){
+        if((void *)curr == (void *) b){
+            return false;
+        }
+        curr = curr->next;
+    }
+
     ((struct mem_fast_free_block*)b)->next = ((struct mem_fast_free_block*) pool->first_free);
     pool->first_free = b;
+
+    return true;
 }
 
 size_t mem_get_allocated_block_size_fast_pool(mem_pool_t *pool, void *addr)

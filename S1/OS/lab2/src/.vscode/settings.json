@@ -6,6 +6,7 @@
         "mem_alloc.h": "c",
         "mem_alloc_fast_pool.h": "c",
         "mem_alloc_standard_pool.h": "c",
-        "mem_alloc_types.h": "c"
+        "mem_alloc_types.h": "c",
+        "stdbool.h": "c"
     }
 }

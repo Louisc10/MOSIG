@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 
 #include "mem_alloc_types.h"
@@ -45,7 +46,7 @@ typedef struct mem_std_allocated_block
 /* Functions for the management of a standard pool */
 void init_standard_pool(mem_pool_t *p, size_t size, size_t min_request_size, size_t max_request_size);
 void *mem_alloc_standard_pool(mem_pool_t *pool, size_t size);
-void mem_free_standard_pool(mem_pool_t *pool, void *addr);
+bool mem_free_standard_pool(mem_pool_t *pool, void *addr);
 size_t mem_get_allocated_block_size_standard_pool(mem_pool_t *pool, void *addr);
 
 /////////////////////////////////////////////////////////////////////////////

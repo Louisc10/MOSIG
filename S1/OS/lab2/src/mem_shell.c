@@ -50,7 +50,9 @@ int main(int argc, char *argv[])
             help();
             break;
         case 'q':
-            exit(0);
+            if(memory_checker() == 0){
+                exit(0);
+            }
         default:
             fprintf(stderr, "Command not found !\n");
         }
