@@ -117,7 +117,7 @@ int memory_checker(){
     for(int i = 0; i < NB_MEM_POOLS; i++){
         if(used_memories[i] != 0){
             needToFree = true;
-            fprintf(stderr, "You need to free memory in pool %d\n", i);
+            fprintf(stderr, "[!] You need to free memory in pool %d\n", i);
             print_memory_states(i);
         }
     }
@@ -245,7 +245,7 @@ void *memory_alloc(size_t size)
     if (alloc_addr == NULL)
     {
         print_alloc_error(size);
-        exit(0);
+        // exit(0);
     }
     else
     {
@@ -263,7 +263,7 @@ void *memory_alloc(size_t size)
 void memory_free(void *p)
 {
     int i;
-    bool flag = false;
+    bool flag = false, error = false;
 
     debug_printf("enter p = %p\n", p);
     i = find_pool_from_block_address(p);
@@ -277,14 +277,17 @@ void memory_free(void *p)
         flag = mem_free_standard_pool(&(mem_pools[i]), p);
         break;
     default: /* we should never reach this case */
-        assert(0);
+        // assert(0);
+        //TODO Change assert into something
+        fprintf(stderr, "[!] The memory has not been allocated for that\n");
+        error = true;
     }
     if(flag){
         used_memories[i]--;
         print_free_info(p);
     }
-    else
-        fprintf(stderr, "The memory is already freed\n");
+    else if(!error)
+        fprintf(stderr, "[!] The memory is already freed\n");
     debug_printf("exit\n");
 }
 
