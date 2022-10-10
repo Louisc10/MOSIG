@@ -66,6 +66,17 @@ static mem_pool_t standard_pool_1025_and_above = {
 
 int used_memories [NB_MEM_POOLS];
 
+/* Function: print_fast_mem
+----------------------------------------------------------------
+    
+    1. Creates an array with the size of blocks in a pool - count_block 
+    2. Initialize the array with "1". 1 is allocated, 0 is free. 
+    3. Loops through each block in the free blocks list. 
+        - To find the index of a block in the array:
+        index = (current_address - pool_start_address) / block_size
+        and we know that the block is free
+        count_block[index] = 1
+*/
 void print_fast_mem(int pool){
     int j;
     int count_block =  mem_pools[pool].pool_size / mem_pools[pool].max_request_size;
@@ -90,6 +101,12 @@ void print_fast_mem(int pool){
     fprintf(stderr, "%d\n", pool_state_array[count_block-1]);
 }
 
+/* Function: print_standard_mem
+----------------------------------------------------------------
+
+    Loop every block in the pool by calculating their address
+    address_next = address_current + 16 bytes + current_size
+    */
 void print_standard_mem(int pool){
     fprintf(stderr, "\nStandard Pool %d:\n", pool);
     struct mem_std_block_header_footer_t *current_header = (struct mem_std_block_header_footer_t*) mem_pools[3].start;
@@ -103,6 +120,13 @@ void print_standard_mem(int pool){
     fprintf(stderr, "[NULL]\n");
 }
 
+/* Function: print_memory_states
+----------------------------------------------------------------
+Call the function to print the memory pool based on it's type.
+
+    pool - address to the pool
+
+*/
 void print_memory_states(int pool){
     if(mem_pools[pool].pool_type == FAST_POOL)
         print_fast_mem(pool);
@@ -110,8 +134,13 @@ void print_memory_states(int pool){
         print_standard_mem(pool);
 }
 
+/* Function: memory_checker
+----------------------------------------------------------------
+It check the memory is there any memory that still used before the termination happened.
+
+
+*/
 int memory_checker(){
-    //TODO Add Memory Checker
     bool needToFree = false;
 
     for(int i = 0; i < NB_MEM_POOLS; i++){
@@ -133,7 +162,6 @@ void run_at_exit(void)
 {
     fprintf(stderr, "YEAH B-)\n");
     /* You are encouraged to insert more useful code ... */
-    // memory_checker();
 }
 
 /* 

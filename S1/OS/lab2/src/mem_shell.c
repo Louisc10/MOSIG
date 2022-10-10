@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
             help();
             break;
         case 'q':
+            /* Do the memory checker before we terminate the program */
             if(memory_checker() == 0){
                 exit(0);
             }
