@@ -51,14 +51,14 @@ void set_allocated_size(struct mem_std_allocated_block *address, size_t size){
     set_block_size(&address->header, size);
 }
 
-bool get_first_fit_compare(struct mem_std_free_block *curr, struct mem_std_free_block *temp){
+bool position_compare(struct mem_std_free_block *curr, struct mem_std_free_block *temp){
     return (void *)curr > (void *)temp;
 }
 
 void sort_block(mem_pool_t *pool){
     struct mem_std_free_block *curr = pool->first_free;
     struct mem_std_free_block *temp = curr->next;
-    bool compare = get_first_fit_compare(curr, temp);
+    bool compare = position_compare(curr, temp);
      
     bool isFirst = true;
     //printf(">> Curr %p\nTemp %p\nResult %s\n\n", (void *)curr ,(void *)temp, compare? "true": "false");
@@ -82,7 +82,7 @@ void sort_block(mem_pool_t *pool){
             temp->prev = curr;
         //printf("Curr %p\nTemp %p\n\n\n", (void *)curr ,(void *)temp);
 
-        compare = get_first_fit_compare(curr, temp);
+        compare = position_compare(curr, temp);
     };
 }
 
