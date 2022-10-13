@@ -4,6 +4,8 @@
 
 int rows, cols;
 gray *graymap;
+int *filter;
+int divider;
 
 int get_byte_by_pos(int col, int row){
   if(row < 0)
@@ -18,31 +20,54 @@ int get_byte_by_pos(int col, int row){
   return graymap[row * cols + col];
 }
 
-int get_new_byte(int col, int row){
-  int temp = 0;
-  temp += get_byte_by_pos(col-1,row-1) * 1;
-  temp += get_byte_by_pos(col-1,row) * 2;
-  temp += get_byte_by_pos(col-1,row+1) * 1;
+/*
+Create Pascal triangle
+Courtesy: https://www.faceprep.in/c/program-to-print-pascals-triangle/
+*/
+void createFilter(int filter_size){
+  int coef, i, j, temp_pascal[filter_size+2];
+  divider = 0;
+  for(i = 0; i<= filter_size; i++){
+		if(i==0)
+			coef = 1;
+		else
+			coef = coef * (filter_size-i)/i;
+		
+		temp_pascal[i] = coef;
+	}
 
-  temp += get_byte_by_pos(col,row-1) * 2;
-  temp += get_byte_by_pos(col,row) * 4;
-  temp += get_byte_by_pos(col,row+1) * 2;
-
-  temp += get_byte_by_pos(col+1,row-1) * 1;
-  temp += get_byte_by_pos(col+1,row) * 2;
-  temp += get_byte_by_pos(col+1,row+1) * 1;
-
-  return temp / 16;
+  filter = malloc(sizeof(int) * filter_size * filter_size);
+  for(i = 0; i < filter_size; i++){
+    for(j = 0; j < filter_size; j++){
+      int x = temp_pascal[i] * temp_pascal[j];
+      filter[i*filter_size+j] = x;
+      divider += x;
+    }
+  }
 }
 
-void repeat_run(int total_runs){
+
+int get_new_byte(int col, int row, int filter_size){
+  int temp = 0;
+  int start_col = col - (filter_size/2);
+  int start_row = row - (filter_size/2);
+  for(int i = 0; i < filter_size; i++){
+    for(int j = 0; j < filter_size; j++){
+      temp += get_byte_by_pos(start_col + i, start_row + j) * filter[i *filter_size + j];
+    }
+  }
+
+  return temp / divider;
+}
+
+void repeat_run(int total_runs, int filter_size){
   gray temp_graymap[cols * rows];
   int k;
   int i, j;
   for(k = 0; k < total_runs; k++){
     for(i=0; i < rows; i++){
       for(j=0; j < cols ; j++){
-        temp_graymap[i * cols + j] = get_new_byte(j,i);
+        temp_graymap[i * cols + j] = get_new_byte(j,i, filter_size);
       }
     }
     for(i=0; i < rows; i++){
@@ -55,14 +80,14 @@ void repeat_run(int total_runs){
 
 int main(int argc, char* argv[]){
   FILE* ifp;
-  int ich1, ich2, maxval=255, pgmraw, total_runs;
+  int ich1, ich2, maxval=255, pgmraw, filter_size, total_runs;
   int i, j;
 
   /*
     Argument Handler
   */
-  if ( argc != 3 ){
-    printf("\nUsage: %s file repetition \n\n", argv[0]);
+  if ( argc != 4 ){
+    printf("\nUsage: %s file filter_size repetition \n\n", argv[0]);
     exit(0);
   }
 
@@ -71,8 +96,15 @@ int main(int argc, char* argv[]){
     printf("error in opening file %s\n", argv[1]);
     exit(1);
   }
+
+  filter_size = atoi(argv[2]);
+  if(filter_size < 0 || filter_size %2 != 1){
+    printf("error in size of filter %s\n", argv[2]);
+    printf("expecting %s is greater than 0 and an odd number\n", argv[3]);
+    exit(1);
+  }
   
-  total_runs = atoi(argv[2]);
+  total_runs = atoi(argv[3]);
   if(total_runs < 0){
     printf("Filter need to run at least once\n");
     exit(1);
@@ -108,7 +140,8 @@ int main(int argc, char* argv[]){
   /*
     Processing
   */
-  repeat_run(total_runs);
+  createFilter(filter_size);
+  repeat_run(total_runs, filter_size);
   
   if(pgmraw)
     printf("P2\n");

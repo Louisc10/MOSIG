@@ -76,8 +76,11 @@ int main(int argc, char* argv[]){
   int ich1, ich2, maxval=255, pgmraw, total_runs;
   int i, j;
 
+  /*
+    Argument Handler
+  */
   if ( argc != 3 ){
-    printf("\nUsage: %s file \n\n", argv[0]);
+    printf("\nUsage: %s file repetition\n\n", argv[0]);
     exit(0);
   }
 
@@ -88,6 +91,10 @@ int main(int argc, char* argv[]){
   }
 
   total_runs = atoi(argv[2]);
+  if(total_runs < 0){
+    printf("Filter need to run at least once\n");
+    exit(1);
+  }
 
   ich1 = getc( ifp );
   if ( ich1 == EOF )
@@ -116,6 +123,11 @@ int main(int argc, char* argv[]){
       else
         graymap[i * cols + j] = pm_getint(ifp);
 
+  /*
+    Processing
+  */
+  repeat_run(total_runs);
+
   if(pgmraw)
     printf("P2\n");
   else
@@ -123,7 +135,6 @@ int main(int argc, char* argv[]){
 
   printf("%d %d \n", cols, rows);
   printf("%d\n",maxval);
-  repeat_run(total_runs);
 
   for(i=0; i < rows; i++){
     for(j=0; j < cols ; j++){

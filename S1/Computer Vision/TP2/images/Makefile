@@ -1,4 +1,4 @@
-PROG = filtering_3x3, filtering_5x5 filter_median histogram
+PROG = filtering, filtering_3x3, filtering_5x5 filter_median histogram
 
 all : $(PROG)
 
@@ -8,6 +8,7 @@ CFLAGS    =  -g -Wall
 CPPFLAGS  =  -DDEBUG
 LDFLAGS   =  -g -lm
 
+filtering : filtering.o Util.o
 filtering_3x3 : filtering_3x3.o Util.o
 filtering_5x5 : filtering_5x5.o Util.o
 filter_median : filter_median.o Util.o

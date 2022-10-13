@@ -63,6 +63,9 @@ int main(int argc, char* argv[]){
   int ich1, ich2, maxval=255, pgmraw, total_runs, size_filter;
   int i, j;
 
+  /*
+    Argument Handler
+  */
   if ( argc != 4 ){
     printf("\nUsage: %s file \n\n", argv[0]);
     exit(0);
@@ -74,12 +77,16 @@ int main(int argc, char* argv[]){
     exit(1);
   }
 
-  total_runs = atoi(argv[2]);
-
-  size_filter = atoi(argv[3]);
+  size_filter = atoi(argv[2]);
   if(size_filter % 2 == 0 || size_filter <= 0){
-    printf("error in size of filter %s\n", argv[3]);
+    printf("error in size of filter %s\n", argv[2]);
     printf("expecting %s is greater than 0 and an odd number\n", argv[3]);
+    exit(1);
+  }
+
+  total_runs = atoi(argv[3]);
+  if(total_runs < 0){
+    printf("Filter need to run at least once\n");
     exit(1);
   }
 
@@ -110,6 +117,11 @@ int main(int argc, char* argv[]){
       else
         graymap[i * cols + j] = pm_getint(ifp);
 
+  /*
+    Processing
+  */
+  repeat_run(total_runs, size_filter);
+  
   if(pgmraw)
     printf("P2\n");
   else
@@ -117,7 +129,6 @@ int main(int argc, char* argv[]){
 
   printf("%d %d \n", cols, rows);
   printf("%d\n",maxval);
-  repeat_run(total_runs, size_filter);
 
   for(i=0; i < rows; i++){
     for(j=0; j < cols ; j++){
