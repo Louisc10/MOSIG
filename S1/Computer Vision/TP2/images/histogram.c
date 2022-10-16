@@ -226,8 +226,10 @@ int main(int argc, char* argv[]){
 
   if(strcmp(mode, "s") == 0){
     histogram_stretching(cols, rows, maxval);
-  }else if(strcmp(mode, "e") == 0){
+  }
+  else if(strcmp(mode, "e") == 0){
     histogram_equalization(cols, rows, maxval);
+  }
 
   if(pgmraw)
     printf("P2\n");
@@ -236,7 +238,6 @@ int main(int argc, char* argv[]){
 
   printf("%d %d \n", cols, rows);
   printf("%d\n",maxval);
-  }
 
   for(i=0; i < rows; i++){
     for(j=0; j < cols ; j++){
