@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "util.h": "c",
+        "stdlib.h": "c",
+        "array": "c",
+        "hash_map": "c",
+        "bitset": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "ranges": "c",
+        "utility": "c"
+    }
+}
