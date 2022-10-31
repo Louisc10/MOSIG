@@ -1,0 +1,1 @@
+cd /mnt/d/choul/OneDrive/"OneDrive - Bina Nusantara"/Documents/GitHub/MOSIG/S1/OS/lab4/src
