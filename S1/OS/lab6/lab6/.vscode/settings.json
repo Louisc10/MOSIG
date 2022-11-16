@@ -1,0 +1,10 @@
+{
+    "C_Cpp.errorSquiggles": "Enabled",
+    "files.associations": {
+        ".blade.php": "html",
+        ".tpl": "html",
+        "babble_types.h": "c",
+        "babble_server.h": "c",
+        "babble_registration.h": "c"
+    }
+}
