@@ -11,23 +11,6 @@ int rows, cols;
 gray *image;
 int pixel_val = 3;
 
-/* 
-  Get_byte_pos
-  it will return the value of the pixel based on the position
-*/ 
-int get_byte_by_pos(int col, int row){
-  if(row < 0)
-    row = 0;
-  if(col < 0)
-    col = 0;
-  if(col >= cols)
-    col = cols-1;
-  if(row >= rows)
-    row = rows-1;
-  
-  return image[row * cols + col];
-}
-
 int* generate_random_centroid(int k_cluster,  int maxval){
   int i;
   int *cluster = malloc(sizeof(int) * k_cluster * pixel_val);
@@ -61,7 +44,9 @@ int* map(int k_cluster, int *cluster){
   int *temp = malloc(sizeof(int) * cols * rows);
   for(i = 0; i < cols; i++){
     for(j = 0; j < rows; j++){
-      temp[i * rows + j] = euclidean_distance(&image[i * rows + (pixel_val * j)], k_cluster, cluster);
+      int index = i * (rows * pixel_val) + (pixel_val * j);
+      // printf("%d ",  index);
+      temp[i * rows + j] = euclidean_distance(&image[index], k_cluster, cluster);
     }
   }
 
@@ -70,7 +55,7 @@ int* map(int k_cluster, int *cluster){
 
 int *update_cluster(int k_cluster, int *mark){
   int *cluster = malloc(sizeof(int) * k_cluster * pixel_val);
-  double *temp = malloc(sizeof(double) * k_cluster * pixel_val);
+  unsigned long long int *temp = malloc(sizeof(unsigned long long int) * k_cluster * pixel_val);
   int *count = malloc(sizeof(int) * k_cluster);
 
   int i,j,k;
@@ -89,7 +74,8 @@ int *update_cluster(int k_cluster, int *mark){
 
   for(i=0; i < k_cluster; i++){
     for(j=0; j<pixel_val; j++){
-      cluster[i*pixel_val + j] = temp[i * pixel_val + j] / count[i];
+      if(count[i] != 0)
+        cluster[i*pixel_val + j] = (int) (temp[i * pixel_val + j] / count[i]);
     }
   }
 
@@ -181,7 +167,7 @@ int main(int argc, char* argv[]){
   for(i=0; i < total_runs; i++){
     mark = map(k_cluster, cluster);
     cluster = update_cluster(k_cluster, mark);
-    print(k_cluster, cluster, mark);
+    // print(k_cluster, cluster, mark);
   }
   
   printf("P3\n");
@@ -192,9 +178,11 @@ int main(int argc, char* argv[]){
   for(i=0; i < rows * cols ; i++){
     int k_val = mark[i];
     for(j=0; j < pixel_val; j++){
-      printf("%d ", cluster[k_val * pixel_val + j]);
+      printf("%d ", maxval/k_cluster * k_val);
+      // printf("%d ", cluster[k_val * pixel_val + j]);
     }
   }
+    print(k_cluster, cluster, mark);
 
   fclose(ifp);
   return 0;
