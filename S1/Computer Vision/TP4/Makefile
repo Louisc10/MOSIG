@@ -1,4 +1,4 @@
-PROG = filtering
+PROG = clustering clustering_updated
 all : $(PROG)
 
 # Variables for file compilation
@@ -7,7 +7,8 @@ CFLAGS    =  -g -Wall
 CPPFLAGS  =  -DDEBUG
 LDFLAGS   =  -g -lm
 
-filtering : filtering.o Util.o -lm
+clustering : clustering.o Util.o -lm
+clustering_updated : clustering_updated.o Util.o -lm
 
 clean :
 	@rm -f *.o
