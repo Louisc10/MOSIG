@@ -18,11 +18,6 @@ struct point3d{
    int b;
 };
 
-struct origin{
-  float u;
-  float v;
-}
-
 /* The following function reads a point cloud from an off file and returns the point cloud in an array of structre of point3d */
 /* The number of points is also return in N */
 /* An example to use this function:
@@ -66,7 +61,14 @@ int main(int argc, char* argv[])
 */
 void computeTrans(float gama, float beta, float alpha, float T_x, float T_y, float T_z, float *result);
 
+struct point3d *transform(struct point3d *points, int N_v, float *matrix);
 
-struct point3d *pinhole(struct point3d *points, int N_v, int f);
+struct point3d *pinhole(struct point3d *points, int N_v, float f);
 
 void print_result(int N_v, struct point3d *points);
+
+struct point3d *normalize_dot(struct point3d *points, int N_v, int resolution_u, int resolution_v);
+
+void create_image(int N_v, struct point3d *points, int resolution_u, int resolution_v);
+
+struct point3d *orthographic(struct point3d *points, int N_v);

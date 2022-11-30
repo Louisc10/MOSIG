@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdbool.h>
 #include "imageFormationUtils.h"
 
 
@@ -166,7 +167,7 @@ void computeTrans(float gama, float beta, float alpha, float T_x, float T_y, flo
   return;
 }
 
-struct point3d *pinhole(struct point3d *points, int N_v, int f){
+struct point3d *transform(struct point3d *points, int N_v, float *matrix){
   int i;
   struct point3d *temp = malloc(sizeof(struct point3d));
   for(i = 0; i < N_v; i++){
@@ -177,21 +178,50 @@ struct point3d *pinhole(struct point3d *points, int N_v, int f){
     temp[0].g = points[i].g;
     temp[0].b = points[i].b;
 
-    points[i].x = temp[0].x/((1 + temp[0].z)/f);
-    points[i].y = temp[0].y/((1 + temp[0].z)/f);
-    points[i].z = 0;
+    points[i].x = matrix[0]*temp[0].x + matrix[1]*temp[0].y + matrix[2]*temp[0].z + matrix[3];
+    points[i].y = matrix[4]*temp[0].x + matrix[5]*temp[0].y + matrix[6]*temp[0].z + matrix[7];
+    points[i].z = matrix[8]*temp[0].x + matrix[9]*temp[0].y + matrix[10]*temp[0].z + matrix[11];
   }
 
   return points;
 }
 
-struct origin *projected_point(int resolution_u, int resolution_v, struct origin *image_origins, struct point3d *pinholes, int N_v){
+struct point3d *pinhole(struct point3d *points, int N_v, float f){
   int i;
+  struct point3d *temp = malloc(sizeof(struct point3d));
   for(i = 0; i < N_v; i++){
-    image_origins[i].u = pinholes[i].x/(resolution_u + image_origins[i].u);
-    image_origins[i].v = pinholes[i].y/(resolution_v + image_origins[i].v);
+    temp[0].x = points[i].x;
+    temp[0].y = points[i].y;
+    temp[0].z = points[i].z;
+    // temp[0].r = points[i].r;
+    // temp[0].g = points[i].g;
+    // temp[0].b = points[i].b;
+
+    points[i].x = temp[0].x/((1 + temp[0].z)/f);
+    points[i].y = temp[0].y/((1 + temp[0].z)/f);
+    // points[i].z = 0;
   }
-  return image_origins;
+
+  return points;
+}
+
+struct point3d *orthographic(struct point3d *points, int N_v){
+  int i;
+  struct point3d *temp = malloc(sizeof(struct point3d));
+  for(i = 0; i < N_v; i++){
+    temp[0].x = points[i].x;
+    temp[0].y = points[i].y;
+    temp[0].z = points[i].z;
+    // temp[0].r = points[i].r;
+    // temp[0].g = points[i].g;
+    // temp[0].b = points[i].b;
+
+    points[i].x = temp[0].x;
+    points[i].y = temp[0].y;
+    // points[i].z = 0;
+  }
+
+  return points;
 }
 
 void print_result(int N_v, struct point3d *points){
@@ -200,5 +230,70 @@ void print_result(int N_v, struct point3d *points){
   printf("%d %d %d", N_v, 0, 0);
   for(i = 0; i < N_v; i++){
     printf("\n%f %f %f %d %d %d %d", points[i].x, points[i].y, points[i].z, points[i].r, points[i].g, points[i].b, 255);
+  }
+}
+
+struct point3d *normalize_dot(struct point3d *points, int N_v, int resolution_u, int resolution_v){
+  int i;
+  int central_width = resolution_u/2;
+  int central_height = resolution_v/2; 
+  float alpha_u = 0.005; 
+  float alpha_v = 0.005; 
+  for(i = 0; i < N_v; i++){
+    points[i].x = central_width + (points[i].x/alpha_u);
+    points[i].y = central_height + (points[i].y/alpha_v);
+  }
+  return points;
+}
+
+bool is_still_seen(int x, int y, int w, int h){
+  if (x <0 || y <0)
+    return false;
+  if(x >= w || y >= h)
+    return false;
+  return true;
+}
+
+void create_image(int N_v, struct point3d *points, int resolution_u, int resolution_v){
+  int i,j;
+  int *count=malloc(sizeof(int) * resolution_u * resolution_v);
+  int *red=malloc(sizeof(int) * resolution_u * resolution_v);
+  int *green=malloc(sizeof(int) * resolution_u * resolution_v);
+  int *blue=malloc(sizeof(int) * resolution_u * resolution_v);
+  for(i=0;i<resolution_v;i++){
+    for(j=0;j<resolution_u;j++){
+      count[i*resolution_u + j] = -1;
+      red[i*resolution_u + j] = 0;
+      green[i*resolution_u + j] = 0;
+      blue[i*resolution_u + j] = 0;
+    }
+  }
+  
+  for(i=0;i<N_v;i++){
+    int index_x = (int) points[i].x;
+    int index_y = (int) points[i].y;
+    if(!is_still_seen(index_x,index_y,resolution_u, resolution_v))
+      continue;
+    if(count[index_y * resolution_u + index_x] == -1){
+      count[index_y * resolution_u + index_x] = points[i].z;
+      red[index_y * resolution_u + index_x] = points[i].r;
+      green[index_y * resolution_u + index_x] = points[i].g;
+      blue[index_y * resolution_u + index_x] = points[i].b;
+    }
+    else if(points[i].z >= count[index_y * resolution_u + index_x]){
+      red[index_y * resolution_u + index_x] = points[i].r;
+      green[index_y * resolution_u + index_x] = points[i].g;
+      blue[index_y * resolution_u + index_x] = points[i].b;
+    }
+  }
+  printf("%s\n", "P3");
+  printf("%d %d\n%d\n", resolution_u, resolution_v, 255);
+  for(i=0;i<resolution_v;i++){
+    for(j=0;j<resolution_u;j++){
+      if(count[i * resolution_u + j] == -1)
+        printf("0 0 0 ");
+      else
+        printf("%d %d %d ", red[i * resolution_u + j], green[i * resolution_u + j], blue[i * resolution_u + j]);
+    }
   }
 }
